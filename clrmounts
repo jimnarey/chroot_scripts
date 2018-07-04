@@ -1,0 +1,5 @@
+#!/bin/bash
+umount $1/proc
+umount $1/sys
+umount $1/dev
+umount $1/dev/pts

@@ -1,0 +1,14 @@
+#!/bin/bash
+
+mount --bind /dev $1/dev
+mount --bind /dev/pts $1/dev/pts
+mount --bind /proc $1/proc
+mount --bind /sys $1/sys
+
+chroot $1 bash 
+
+umount -lf $1/dev
+umount -lf $1/dev/pts
+umount -lf $1/proc
+umount -lf $1/sys
+

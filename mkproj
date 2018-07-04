@@ -1,0 +1,49 @@
+#!/bin/bash
+
+# $1 project/directory name 
+
+if [ "$#" -ne 1 ]; then
+    echo "Error: project name needed"
+fi
+
+# Save paths as variables
+CALLPATH="$(pwd)"
+PROJPATH="$CALLPATH/$1"
+
+# Make the necessary directories
+mkdir -p $PROJPATH/{chroot,scratch,image/live}
+
+# Create the grub.cfg file
+cat <<'EOF' >$PROJPATH/scratch/grub.cfg
+
+search --set=root --file /LIVE_BOOT
+
+insmod all_video
+
+set default="0"
+set timeout=30
+
+menuentry "Live Boot" {
+    linux /vmlinuz boot=live quiet nomodeset
+    initrd /initrd
+}
+EOF
+
+# Create a file to identify root fs
+touch $PROJPATH/image/LIVE_BOOT
+
+# Create efi boot files
+grub-mkstandalone \
+    --format=x86_64-efi \
+    --output=$PROJPATH/scratch/bootx64.efi \
+    --locales="" \
+    --fonts="" \
+    "boot/grub/grub.cfg=$PROJPATH/scratch/grub.cfg"
+
+(cd $PROJPATH/scratch && \
+dd if=/dev/zero of=efiboot.img bs=1M count=10 && \
+mkfs.vfat efiboot.img && \
+mmd -i efiboot.img efi efi/boot && \
+mcopy -i efiboot.img ./bootx64.efi ::efi/boot/
+)
+
